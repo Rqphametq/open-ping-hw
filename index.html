@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open de Ping Pong Hello Watt 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        /* Modal transitions */
+        .modal-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            transform: scale(0.95);
+            transition: transform 0.2s ease;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .match-card {
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 20; /* Pour que les boutons soient toujours cliquables */
+        }
+        .match-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Custom Scrollbar for tables */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Styles pour l'arbre du tournoi (lignes de connexion) */
+        .bracket-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 3rem;
+            padding-top: 2rem;
+        }
+        .bracket-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            position: relative;
+            gap: 1.5rem;
+        }
+        .bracket-match-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .connector-right::after {
+            content: "";
+            position: absolute;
+            right: -1.5rem;
+            top: 50%;
+            width: 1.5rem;
+            border-bottom: 2px solid #cbd5e1;
+            z-index: 0;
+        }
+        .connector-left::before {
+            content: "";
+            position: absolute;
+            left: -1.5rem;
+            top: 50%;
+            width: 1.5rem;
+            border-bottom: 2px solid #cbd5e1;
+            z-index: 0;
+        }
+        .connector-vertical-top::after {
+            content: "";
+            position: absolute;
+            right: -1.5rem;
+            top: 50%;
+            height: calc(50% + 0.75rem);
+            border-right: 2px solid #cbd5e1;
+            border-top-right-radius: 6px;
+            z-index: 0;
+        }
+        .connector-vertical-bottom::after {
+            content: "";
+            position: absolute;
+            right: -1.5rem;
+            bottom: 50%;
+            height: calc(50% + 0.75rem);
+            border-right: 2px solid #cbd5e1;
+            border-bottom-right-radius: 6px;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- En-tête (z-40 pour rester au dessus de tout) -->
+    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg shadow-sm">
+                    <!-- Nouveau Logo Ping Pong -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Raquette droite -->
+                        <ellipse cx="16" cy="9" rx="3.5" ry="5" transform="rotate(45 16 9)" />
+                        <line x1="13.5" y1="11.5" x2="10" y2="15" stroke-width="2.5" />
+                        <!-- Raquette gauche -->
+                        <ellipse cx="8" cy="9" rx="3.5" ry="5" transform="rotate(-45 8 9)" />
+                        <line x1="10.5" y1="11.5" x2="14" y2="15" stroke-width="2.5" />
+                        <!-- Balle -->
+                        <circle cx="12" cy="3.5" r="1.5" fill="currentColor" stroke="none" />
+                    </svg>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Open de Ping Pong Hello Watt 2026</h1>
+            </div>
+            <div class="text-sm font-medium px-3 py-1 bg-slate-100 text-slate-600 rounded-full flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Prototype Local (20 Joueurs)
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation par Onglets -->
+    <div class="bg-white border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 flex gap-6">
+            <button onclick="switchMainTab('poules')" id="nav-poules" class="py-4 text-sm font-semibold border-b-2 border-blue-600 text-blue-600 transition-colors">
+                Phases de Poules
+            </button>
+            <button onclick="switchMainTab('bracket')" id="nav-bracket" class="py-4 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors">
+                Phases Finales
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenu Principal -->
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 py-8">
+        
+        <!-- VUE POULES -->
+        <div id="view-poules" class="space-y-12">
+            <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 text-sm text-blue-900 mb-8">
+                <h3 class="font-semibold flex items-center gap-2 mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                    Fonctionnement des poules
+                </h3>
+                <p class="text-blue-800/80 leading-relaxed">
+                    Les 20 joueurs sont répartis en <strong>5 poules de 4</strong> (3 matchs par joueur). Les matchs se jouent en 2 sets gagnants.<br>
+                    <strong>Barème :</strong> Victoire 2-0 (3 pts), Victoire 2-1 (2 pts), Défaite 1-2 (1 pt), Défaite 0-2 (0 pt).<br>
+                    <strong>Qualification :</strong> Les 1ers de chaque poule, ainsi que les <strong>3 meilleurs deuxièmes</strong> (toutes poules confondues) se qualifient pour les Quarts de Finale une fois <u>tous les matchs de poule</u> terminés !
+                </p>
+            </div>
+
+            <!-- Conteneur des poules (rempli par JS) -->
+            <div id="poules-container" class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <!-- Les poules A, B, C, D iront ici -->
+            </div>
+        </div>
+
+        <!-- VUE PHASES FINALES -->
+        <div id="view-bracket" class="hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 min-h-[600px] overflow-x-auto custom-scrollbar">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8">Tableau Final</h2>
+                
+                <div id="bracket-container" class="flex flex-col gap-10 min-w-[700px]">
+                    <!-- Rempli par JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Fenêtre Modale d'édition de match (z-50 pour la modale) -->
+    <div id="match-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay bg-slate-900/40 backdrop-blur-sm p-4">
+        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-lg font-bold text-slate-800">Gestion du match</h3>
+                <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-lg hover:bg-slate-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto">
+                <div class="text-center mb-6">
+                    <span id="modal-round-badge" class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 mb-2">Tour</span>
+                    <h4 id="modal-match-players" class="text-xl font-bold text-slate-800">Joueur 1 <span class="text-slate-400 font-normal mx-2">vs</span> Joueur 2</h4>
+                </div>
+
+                <form id="match-form" onsubmit="saveMatch(event)">
+                    <input type="hidden" id="modal-match-id">
+                    
+                    <div class="flex p-1 bg-slate-100 rounded-xl mb-6">
+                        <button type="button" id="tab-plan" onclick="switchModalTab('plan')" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-slate-800 transition-all">📅 Planifier</button>
+                        <button type="button" id="tab-score" onclick="switchModalTab('score')" class="flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all">🏆 Résultat</button>
+                    </div>
+
+                    <div id="section-plan" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Date et heure prévues</label>
+                            
+                            <!-- NOUVEAUX CHAMPS SÉPARÉS (DATE, HEURE, MINUTES) -->
+                            <div class="flex gap-2 w-full">
+                                <input type="date" id="match-date" class="w-1/2 border-slate-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-3 border bg-slate-50 focus:bg-white transition-colors">
+                                
+                                <select id="match-hour" class="w-1/4 border-slate-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-3 border bg-slate-50 focus:bg-white transition-colors">
+                                    <option value="" disabled selected>Heure</option>
+                                    <option value="09">09h</option>
+                                    <option value="10">10h</option>
+                                    <option value="11">11h</option>
+                                    <option value="12">12h</option>
+                                    <option value="13">13h</option>
+                                    <option value="14">14h</option>
+                                    <option value="15">15h</option>
+                                    <option value="16">16h</option>
+                                    <option value="17">17h</option>
+                                    <option value="18">18h</option>
+                                    <option value="19">19h</option>
+                                </select>
+                            
+                                <select id="match-minute" class="w-1/4 border-slate-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2 py-3 border bg-slate-50 focus:bg-white transition-colors">
+                                    <option value="" disabled selected>Min</option>
+                                    <option value="00">00</option>
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                    <option value="30">30</option>
+                                    <option value="40">40</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-500 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                            Laisse ces champs vides si la date n'est pas encore fixée ("Date à définir").
+                        </p>
+                    </div>
+
+                    <div id="section-score" class="hidden space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Vainqueur du match</label>
+                            <select id="match-winner" class="w-full border-slate-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3 border bg-slate-50 focus:bg-white transition-colors appearance-none cursor-pointer">
+                                <option value="">Match non joué...</option>
+                                <!-- Rempli par JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Score final en sets (Obligatoire si joué)</label>
+                            <select id="match-score" class="w-full border-slate-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3 border bg-slate-50 focus:bg-white transition-colors appearance-none cursor-pointer">
+                                <option value="">Sélectionner le score...</option>
+                                <option value="2-0">Victoire 2 sets à 0</option>
+                                <option value="2-1">Victoire 2 sets à 1</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="modal-error" class="hidden mt-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100"></div>
+
+                    <div class="mt-8 flex justify-end gap-3 pt-4 border-t border-slate-100">
+                        <button type="button" onclick="closeModal()" class="px-5 py-2.5 border border-slate-200 text-sm font-medium rounded-xl text-slate-600 bg-white hover:bg-slate-50 transition-colors">
+                            Annuler
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 shadow-sm text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                            Enregistrer les modifs
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIQUE JAVASCRIPT -->
+    <script>
+        // 1. Initialisation des données (20 joueurs, 5 poules, tableau final)
+        let state = {
+            players: [],
+            matches: [],
+            poules: ['A', 'B', 'C', 'D', 'E']
+        };
+
+        function initData() {
+            // Création de 20 joueurs répartis dans les 5 poules (4 joueurs par poule)
+            for (let i = 1; i <= 20; i++) {
+                state.players.push({
+                    id: `p${i}`,
+                    name: `Joueur ${i}`,
+                    poule: state.poules[(i - 1) % 5]
+                });
+            }
+
+            // Création des matchs de poule
+            state.poules.forEach(poule => {
+                const pPlayers = state.players.filter(p => p.poule === poule);
+                for (let i = 0; i < pPlayers.length; i++) {
+                    for (let j = i + 1; j < pPlayers.length; j++) {
+                        state.matches.push({
+                            id: `m_poule_${poule}_${i}_${j}`,
+                            type: 'poule',
+                            poule: poule,
+                            roundName: `Poule ${poule}`,
+                            p1Id: pPlayers[i].id,
+                            p2Id: pPlayers[j].id,
+                            status: 'pending', datetime: null, winnerId: null, score: null
+                        });
+                    }
+                }
+            });
+
+            // Création des matchs du tableau final
+            const quarts = [
+                { id: 'qf1', roundId: 1, source: { p1: '1er Poule A', p2: 'Meilleur 2ème (1)' } },
+                { id: 'qf2', roundId: 1, source: { p1: '1er Poule B', p2: 'Meilleur 2ème (2)' } },
+                { id: 'qf3', roundId: 1, source: { p1: '1er Poule C', p2: 'Meilleur 2ème (3)' } },
+                { id: 'qf4', roundId: 1, source: { p1: '1er Poule D', p2: '1er Poule E' } },
+            ];
+            
+            quarts.forEach(q => {
+                state.matches.push({
+                    id: q.id, type: 'bracket', roundId: 1, roundName: 'Quarts de finale',
+                    p1Id: null, p2Id: null, source: q.source,
+                    status: 'pending', datetime: null, winnerId: null, score: null
+                });
+            });
+
+            state.matches.push({ id: 'df1', type: 'bracket', roundId: 2, roundName: 'Demi-finales', p1Id: null, p2Id: null, dependsOn: ['qf1', 'qf2'], status: 'pending', datetime: null, winnerId: null, score: null });
+            state.matches.push({ id: 'df2', type: 'bracket', roundId: 2, roundName: 'Demi-finales', p1Id: null, p2Id: null, dependsOn: ['qf3', 'qf4'], status: 'pending', datetime: null, winnerId: null, score: null });
+            state.matches.push({ id: 'fin', type: 'bracket', roundId: 3, roundName: 'Finale', p1Id: null, p2Id: null, dependsOn: ['df1', 'df2'], status: 'pending', datetime: null, winnerId: null, score: null });
+        }
+
+        const getPlayer = (id) => state.players.find(p => p.id === id);
+
+        // 2. Gestion de l'UI des onglets
+        function switchMainTab(tab) {
+            const btnPoules = document.getElementById('nav-poules');
+            const btnBracket = document.getElementById('nav-bracket');
+            const viewPoules = document.getElementById('view-poules');
+            const viewBracket = document.getElementById('view-bracket');
+
+            if (tab === 'poules') {
+                btnPoules.className = "py-4 text-sm font-semibold border-b-2 border-blue-600 text-blue-600 transition-colors";
+                btnBracket.className = "py-4 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors";
+                viewPoules.classList.remove('hidden');
+                viewBracket.classList.add('hidden');
+            } else {
+                btnBracket.className = "py-4 text-sm font-semibold border-b-2 border-blue-600 text-blue-600 transition-colors";
+                btnPoules.className = "py-4 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors";
+                viewBracket.classList.remove('hidden');
+                viewPoules.classList.add('hidden');
+            }
+        }
+
+        // 3. Calcul des classements (Nouveau barème de points)
+        function getStandings(poule) {
+            let standings = state.players
+                .filter(p => p.poule === poule)
+                .map(p => ({ ...p, played: 0, wins: 0, losses: 0, points: 0, setsDiff: 0 }));
+            
+            const pMatches = state.matches.filter(m => m.type === 'poule' && m.poule === poule && m.status === 'played');
+            
+            pMatches.forEach(m => {
+                let winner = standings.find(s => s.id === m.winnerId);
+                let loserId = m.p1Id === m.winnerId ? m.p2Id : m.p1Id;
+                let loser = standings.find(s => s.id === loserId);
+                
+                if (winner && loser) {
+                    winner.played++; winner.wins++;
+                    loser.played++; loser.losses++;
+                    
+                    if (m.score === '2-0') {
+                        winner.points += 3; winner.setsDiff += 2;
+                        loser.points += 0; loser.setsDiff -= 2;
+                    } else if (m.score === '2-1') {
+                        winner.points += 2; winner.setsDiff += 1;
+                        loser.points += 1; loser.setsDiff -= 1;
+                    }
+                }
+            });
+
+            standings.sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                if (b.setsDiff !== a.setsDiff) return b.setsDiff - a.setsDiff;
+                return b.wins - a.wins;
+            });
+
+            return standings;
+        }
+
+        function generateMatchCardHTML(match, isBracket = false, bracketIndex = 0) {
+            const p1 = getPlayer(match.p1Id);
+            const p2 = getPlayer(match.p2Id);
+            let p1Name = p1 ? p1.name : 'À déterminer';
+            let p2Name = p2 ? p2.name : 'À déterminer';
+            
+            if (match.type === 'bracket' && match.source) {
+                if (!p1) p1Name = `<span class="text-xs text-slate-400">${match.source.p1}</span>`;
+                if (!p2) p2Name = `<span class="text-xs text-slate-400">${match.source.p2}</span>`;
+            }
+
+            let badgeHtml = '';
+            let p1Class = 'text-slate-600';
+            let p2Class = 'text-slate-600';
+            
+            if (match.status === 'played') {
+                badgeHtml = `<span class="bg-emerald-100 text-emerald-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded">Terminé</span>`;
+                p1Class = match.winnerId === match.p1Id ? 'font-bold text-slate-900' : 'text-slate-400 line-through';
+                p2Class = match.winnerId === match.p2Id ? 'font-bold text-slate-900' : 'text-slate-400 line-through';
+            } else if (!match.p1Id || !match.p2Id) {
+                badgeHtml = `<span class="bg-slate-100 text-slate-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded">En attente</span>`;
+            } else if (match.datetime) {
+                const date = new Date(match.datetime);
+                const format = date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' });
+                badgeHtml = `<span class="bg-blue-100 text-blue-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded">Prévu: ${format}</span>`;
+            } else {
+                badgeHtml = `<span class="bg-amber-100 text-amber-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded">À définir</span>`;
+            }
+
+            let connectorClasses = '';
+            if (isBracket) {
+                if (match.roundId < 3) connectorClasses += ' connector-right';
+                if (match.roundId > 1) connectorClasses += ' connector-left';
+                if (match.roundId < 3) {
+                    if (bracketIndex % 2 === 0) connectorClasses += ' connector-vertical-top';
+                    else connectorClasses += ' connector-vertical-bottom';
+                }
+            }
+
+            let p1ScoreDisplay = '';
+            let p2ScoreDisplay = '';
+            if (match.status === 'played' && match.score) {
+                const wScore = match.score.split('-')[0];
+                const lScore = match.score.split('-')[1];
+                p1ScoreDisplay = match.winnerId === match.p1Id ? wScore : lScore;
+                p2ScoreDisplay = match.winnerId === match.p2Id ? wScore : lScore;
+            }
+
+            return `
+                <div class="bracket-match-container ${connectorClasses}">
+                    <div class="match-card bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm relative ${isBracket ? 'w-64' : 'w-full'}">
+                        <div class="px-4 py-2 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                            ${badgeHtml}
+                            <button type="button" onclick="openModal('${match.id}')" class="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors">
+                                Gérer
+                            </button>
+                        </div>
+                        <div class="p-4 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+                                        ${match.status === 'played' && match.winnerId === match.p1Id ? '<span class="text-[10px]">👑</span>' : ''}
+                                    </div>
+                                    <span class="text-sm ${p1Class}">${p1Name}</span>
+                                </div>
+                                ${p1ScoreDisplay ? `<span class="text-xs font-bold text-slate-800">${p1ScoreDisplay}</span>` : ''}
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+                                        ${match.status === 'played' && match.winnerId === match.p2Id ? '<span class="text-[10px]">👑</span>' : ''}
+                                    </div>
+                                    <span class="text-sm ${p2Class}">${p2Name}</span>
+                                </div>
+                                ${p2ScoreDisplay ? `<span class="text-xs font-bold text-slate-800">${p2ScoreDisplay}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 4. Affichage des Poules
+        function renderPoules() {
+            const container = document.getElementById('poules-container');
+            let html = '';
+
+            state.poules.forEach(poule => {
+                const standings = getStandings(poule);
+                const pMatches = state.matches.filter(m => m.type === 'poule' && m.poule === poule);
+                
+                let tableHtml = `
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
+                        <div class="bg-slate-800 px-5 py-4 border-b border-slate-700">
+                            <h2 class="font-bold text-white text-lg">Poule ${poule}</h2>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-4 py-3">Joueur</th>
+                                        <th class="px-2 py-3 text-center" title="Joués">J</th>
+                                        <th class="px-2 py-3 text-center" title="Victoires">V</th>
+                                        <th class="px-2 py-3 text-center" title="Différence Sets">Diff</th>
+                                        <th class="px-4 py-3 text-right font-bold">Pts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                standings.forEach((player, index) => {
+                    let rowBg = index === 0 ? 'bg-emerald-50/50' : (index === 1 ? 'bg-blue-50/30' : '');
+                    tableHtml += `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50 ${rowBg}">
+                            <td class="px-4 py-3 font-medium text-slate-800 flex items-center gap-2">
+                                <span class="text-slate-400 font-normal w-3">${index + 1}.</span> 
+                                ${player.name}
+                            </td>
+                            <td class="px-2 py-3 text-center text-slate-600">${player.played}</td>
+                            <td class="px-2 py-3 text-center text-emerald-600 font-medium">${player.wins}</td>
+                            <td class="px-2 py-3 text-center text-slate-500">${player.setsDiff > 0 ? '+'+player.setsDiff : player.setsDiff}</td>
+                            <td class="px-4 py-3 text-right font-bold text-slate-900">${player.points}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += `
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            Matchs de la poule (${pMatches.filter(m => m.status==='played').length}/${pMatches.length})
+                        </div>
+                        <div class="p-4 bg-slate-50/50 flex-grow custom-scrollbar overflow-y-auto max-h-[400px] space-y-4">
+                `;
+
+                pMatches.forEach(match => tableHtml += generateMatchCardHTML(match, false));
+                tableHtml += `</div></div>`;
+                html += tableHtml;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 5. Affichage de l'arbre du tournoi
+        function renderBracket() {
+            const container = document.getElementById('bracket-container');
+            const bracketMatches = state.matches.filter(m => m.type === 'bracket');
+            
+            const rounds = {};
+            bracketMatches.forEach(m => {
+                if (!rounds[m.roundId]) rounds[m.roundId] = [];
+                rounds[m.roundId].push(m);
+            });
+
+            let html = '<div class="bracket-wrapper pb-8 px-4">';
+
+            Object.keys(rounds).sort().forEach(roundId => {
+                const roundMatches = rounds[roundId];
+                html += `
+                    <div class="bracket-column">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider text-center absolute -top-8 w-full">${roundMatches[0].roundName}</h3>
+                `;
+                roundMatches.forEach((match, index) => html += generateMatchCardHTML(match, true, index));
+                html += `</div>`;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // 6. Gestion de la modale
+        function openModal(matchId) {
+            const match = state.matches.find(m => m.id === matchId);
+            if (!match) return;
+
+            const p1 = getPlayer(match.p1Id);
+            const p2 = getPlayer(match.p2Id);
+
+            document.getElementById('modal-match-id').value = match.id;
+            document.getElementById('modal-round-badge').innerText = match.roundName;
+            
+            let p1Display = p1 ? p1.name : (match.source ? `1er Poule ${match.source.p1.poule}` : 'À déterminer');
+            let p2Display = p2 ? p2.name : (match.source ? `2ème Poule ${match.source.p2.poule}` : 'À déterminer');
+
+            document.getElementById('modal-match-players').innerHTML = `
+                ${p1Display} <span class="text-slate-400 font-normal mx-2 text-base">vs</span> ${p2Display}
+            `;
+
+            // PRE-REMPLISSAGE DES 3 CHAMPS DE DATE
+            if (match.datetime) {
+                const d = new Date(match.datetime);
+                document.getElementById('match-date').value = d.toISOString().split('T')[0];
+                document.getElementById('match-hour').value = String(d.getHours()).padStart(2, '0');
+                document.getElementById('match-minute').value = String(d.getMinutes()).padStart(2, '0');
+            } else {
+                document.getElementById('match-date').value = '';
+                document.getElementById('match-hour').value = '';
+                document.getElementById('match-minute').value = '';
+            }
+
+            const selectWinner = document.getElementById('match-winner');
+            selectWinner.innerHTML = '<option value="">Match non joué...</option>';
+            if (p1) selectWinner.innerHTML += `<option value="${p1.id}">${p1.name}</option>`;
+            if (p2) selectWinner.innerHTML += `<option value="${p2.id}">${p2.name}</option>`;
+            selectWinner.value = match.winnerId || '';
+            document.getElementById('match-score').value = match.score || '';
+
+            if (match.status === 'played') switchModalTab('score');
+            else switchModalTab('plan');
+
+            document.getElementById('modal-error').classList.add('hidden');
+            document.getElementById('match-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('match-modal').classList.remove('active');
+        }
+
+        function switchModalTab(tab) {
+            const tabPlan = document.getElementById('tab-plan');
+            const tabScore = document.getElementById('tab-score');
+            const secPlan = document.getElementById('section-plan');
+            const secScore = document.getElementById('section-score');
+
+            if (tab === 'plan') {
+                tabPlan.className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-slate-800 transition-all';
+                tabScore.className = 'flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all';
+                secPlan.classList.remove('hidden');
+                secScore.classList.add('hidden');
+            } else {
+                tabScore.className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-slate-800 transition-all';
+                tabPlan.className = 'flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all';
+                secScore.classList.remove('hidden');
+                secPlan.classList.add('hidden');
+            }
+        }
+
+        // 7. Sauvegarde des modifications et Logique de qualification
+        function saveMatch(e) {
+            e.preventDefault();
+            const matchId = document.getElementById('modal-match-id').value;
+            const matchIndex = state.matches.findIndex(m => m.id === matchId);
+            if (matchIndex === -1) return;
+
+            const match = state.matches[matchIndex];
+            const errorBox = document.getElementById('modal-error');
+
+            // RÉCUPÉRATION DES 3 CHAMPS DE DATE
+            const dateVal = document.getElementById('match-date').value;
+            const hourVal = document.getElementById('match-hour').value;
+            const minuteVal = document.getElementById('match-minute').value;
+
+            let datetimeInput = null;
+            if (dateVal && hourVal && minuteVal) {
+                datetimeInput = `${dateVal}T${hourVal}:${minuteVal}:00`;
+            }
+
+            const winnerId = document.getElementById('match-winner').value;
+            const score = document.getElementById('match-score').value;
+
+            if (winnerId && (!match.p1Id || !match.p2Id)) {
+                errorBox.innerText = "Impossible de définir un vainqueur car les deux joueurs ne sont pas encore connus !";
+                errorBox.classList.remove('hidden');
+                return;
+            }
+            if (winnerId && !score) {
+                errorBox.innerText = "Veuillez sélectionner le score en sets pour valider le match.";
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            match.datetime = datetimeInput;
+            match.winnerId = winnerId || null;
+            match.score = score || null;
+
+            if (winnerId) {
+                match.status = 'played';
+                if (match.type === 'bracket') {
+                    propagateBracketWinner(match);
+                }
+            } else if (match.datetime) {
+                match.status = 'scheduled';
+            } else {
+                match.status = 'pending';
+            }
+
+            // Si c'est un match de poule, vérifier si TOUTES les poules sont terminées
+            if (match.type === 'poule') {
+                checkAllPoulesFinished();
+            }
+
+            renderPoules();
+            renderBracket();
+            closeModal();
+        }
+
+        // Calcule les meilleurs deuxièmes sur l'ensemble des 5 poules
+        function checkAllPoulesFinished() {
+            const allPouleMatches = state.matches.filter(m => m.type === 'poule');
+            const allPlayed = allPouleMatches.every(m => m.status === 'played');
+            
+            if (allPlayed) {
+                let premiers = [];
+                let deuxiemes = [];
+
+                state.poules.forEach(poule => {
+                    const standings = getStandings(poule);
+                    if (standings.length >= 2) {
+                        premiers.push({ ...standings[0], poule: poule });
+                        deuxiemes.push({ ...standings[1], poule: poule });
+                    }
+                });
+
+                // Tri des deuxièmes pour trouver les 3 meilleurs
+                deuxiemes.sort((a, b) => {
+                    if (b.points !== a.points) return b.points - a.points;
+                    if (b.setsDiff !== a.setsDiff) return b.setsDiff - a.setsDiff;
+                    return b.wins - a.wins;
+                });
+                
+                const bestDeuxiemes = deuxiemes.slice(0, 3);
+                const firstsDict = {};
+                premiers.forEach(p => firstsDict[p.poule] = p);
+
+                // Assigner les places pour les Quarts de finale
+                const qfMatches = state.matches.filter(m => m.type === 'bracket' && m.roundId === 1);
+                
+                qfMatches[0].p1Id = firstsDict['A'].id; qfMatches[0].p2Id = bestDeuxiemes[0].id;
+                qfMatches[1].p1Id = firstsDict['B'].id; qfMatches[1].p2Id = bestDeuxiemes[1].id;
+                qfMatches[2].p1Id = firstsDict['C'].id; qfMatches[2].p2Id = bestDeuxiemes[2].id;
+                qfMatches[3].p1Id = firstsDict['D'].id; qfMatches[3].p2Id = firstsDict['E'].id;
+            }
+        }
+
+        function propagateBracketWinner(completedMatch) {
+            const nextMatch = state.matches.find(m => m.dependsOn && m.dependsOn.includes(completedMatch.id));
+            if (nextMatch) {
+                if (nextMatch.dependsOn[0] === completedMatch.id) {
+                    nextMatch.p1Id = completedMatch.winnerId;
+                } else if (nextMatch.dependsOn[1] === completedMatch.id) {
+                    nextMatch.p2Id = completedMatch.winnerId;
+                }
+            }
+        }
+
+        // 8. Démarrage
+        initData();
+        renderPoules();
+        renderBracket();
+    </script>
+</body>
+</html>
