@@ -119,28 +119,32 @@
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
     <!-- En-tête (z-40 pour rester au dessus de tout) -->
+    <!-- En-tête (z-40 pour rester au dessus de tout) -->
     <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            
+            <!-- BLOC GAUCHE : Logo + Titre -->
             <div class="flex items-center gap-3">
                 <div class="bg-blue-600 text-white p-2 rounded-lg shadow-sm">
-                    <!-- Nouveau Logo Ping Pong -->
+                    <!-- Nouveau Logo Ping Pong (Raquette de face + balle) -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <!-- Raquette droite -->
-                        <ellipse cx="16" cy="9" rx="3.5" ry="5" transform="rotate(45 16 9)" />
-                        <line x1="13.5" y1="11.5" x2="10" y2="15" stroke-width="2.5" />
-                        <!-- Raquette gauche -->
-                        <ellipse cx="8" cy="9" rx="3.5" ry="5" transform="rotate(-45 8 9)" />
-                        <line x1="10.5" y1="11.5" x2="14" y2="15" stroke-width="2.5" />
-                        <!-- Balle -->
-                        <circle cx="12" cy="3.5" r="1.5" fill="currentColor" stroke="none" />
+                        <!-- Manche de la raquette -->
+                        <rect x="10.5" y="15" width="3" height="7" rx="1" fill="currentColor" stroke="none" />
+                        <!-- Tête de la raquette (ronde) -->
+                        <circle cx="12" cy="9" r="7" />
+                        <!-- Balle de ping pong -->
+                        <circle cx="20" cy="5" r="1.5" fill="currentColor" stroke="none" />
                     </svg>
                 </div>
                 <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Open de Ping Pong Hello Watt 2026</h1>
             </div>
+
+            <!-- BLOC DROIT : Badge -->
             <div class="text-sm font-medium px-3 py-1 bg-slate-100 text-slate-600 rounded-full flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                 Prototype Local (20 Joueurs)
             </div>
+            
         </div>
     </header>
 
